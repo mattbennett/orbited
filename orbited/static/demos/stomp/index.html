@@ -21,7 +21,14 @@
     <script src="/static/protocols/stomp/stomp.js"></script>
     <script src="shell.js"></script>
     <script>
-        onload = function() {
+    	// get connection params
+    	var match = /host=([^&#=]*)/.exec(window.location.search)
+    	var host = match ? match[1] : "localhost"
+    	
+    	var match = /port=([^&#=]*)/.exec(window.location.search)
+    	var port = match ? match[1] : 61613
+    
+        onload = function() {        	
             // set up shell.
             var output = document.getElementById('output');
             var shell = new Shell(output);
@@ -57,7 +64,7 @@
     <div id="output"></div>
  
     <p>
-        <button onclick="stomp.connect('localhost', 61613, document.getElementById('username').value, document.getElementById('password').value)">Connect</button>
+        <button onclick="stomp.connect(host, port, document.getElementById('username').value, document.getElementById('password').value)">Connect</button>
         <button onclick="stomp.disconnect()">Disconnect</button>
         Name: <input id="username" value="guest" />
         Password: <input id="password" value="guest" />

@@ -6,6 +6,8 @@ from twisted.internet.protocol import Protocol
 from orbited import config
 from orbited import logging
 
+import urlparse
+
 ERRORS = {
     'InvalidHandshake': 102,
     'RemoteConnectionTimeout': 104,
@@ -42,6 +44,9 @@ class ProxyIncomingProtocol(Protocol):
         self.logger.debug('dataReceived: data=%r' % data)
         self.logger.debug('self.outgoingConn is', self.outgoingConn)
 
+        print "---"
+        print data
+
         if self.outgoingConn:
             # NB: outgoingConn is-a ProxyOutgoingProtocol
             self.logger.debug("write (out): %r" % data)
@@ -49,7 +54,13 @@ class ProxyIncomingProtocol(Protocol):
         if self.state == "handshake":
             try:
                 data = data.strip()
-                host, port = data.split(':')
+                urlparse.uses_netloc.append("ssl")
+                url = urlparse.urlparse(data)
+                if not url.netloc: 
+                    ssl = False
+                else:
+                    ssl = url.scheme == "ssl"
+                host, port = url.netloc.split(':')
                 port = int(port)
                 self.completedHandshake = True
             except:
@@ -75,7 +86,12 @@ class ProxyIncomingProtocol(Protocol):
             self.logger.access('new connection from %s:%s to %s:%d' % (self.fromHost, self.fromPort, self.toHost, self.toPort))
             self.state = 'connecting'
             client = ClientCreator(reactor, ProxyOutgoingProtocol, self)
-            client.connectTCP(host, port).addErrback(self.errorConnection) 
+            
+            if ssl:
+                from twisted.internet import ssl
+                client.connectSSL(host, port, ssl.ClientContextFactory()).addErrback(self.errorConnection) 
+            else:
+                client.connectTCP(host, port).addErrback(self.errorConnection) 
                 # TODO: connect timeout or onConnectFailed handling...
         else:
             self.transport.write("0" + str(ERRORS['InvalidHandshake']))            
