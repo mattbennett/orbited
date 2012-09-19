@@ -44,9 +44,6 @@ class ProxyIncomingProtocol(Protocol):
         self.logger.debug('dataReceived: data=%r' % data)
         self.logger.debug('self.outgoingConn is', self.outgoingConn)
 
-        print "---"
-        print data
-
         if self.outgoingConn:
             # NB: outgoingConn is-a ProxyOutgoingProtocol
             self.logger.debug("write (out): %r" % data)
